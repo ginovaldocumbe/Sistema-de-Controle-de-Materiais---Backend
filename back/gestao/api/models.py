@@ -1,6 +1,9 @@
 from django.db import models
-# from django.contrib.auth.models import User
+from django.contrib.auth.models import User
 from django.conf import settings
+
+
+
 
 
 class Categoria(models.Model):
@@ -64,6 +67,7 @@ class Fornecimento(models.Model):
 
 class EstadoPedido(models.Model):
     estado = models.CharField(max_length=50)
+
     def __str__(self):
         return self.estado
 
@@ -93,7 +97,7 @@ class Cargo(models.Model):
         return self.descricao
 
 
-class Contacto_Pessoa(models.Model):
+class Contacto_User(models.Model):
     contacto = models.IntegerField()
     id_pessoa = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -102,3 +106,19 @@ class Contacto_Pessoa(models.Model):
 
     def __str__(self):
         return self.contacto
+
+class DadosUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    SEXO_CHOICE = (
+        ("M", "Masculino"),
+        ("F", "Femenino")
+    )
+
+    sexo = models.CharField(max_length=1,choices=SEXO_CHOICE, null=True, blank=True)
+    data_nascimento = models.DateField()
+    cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE, null=True, blank=True)
+    contacto = models.ForeignKey(Contacto_User, on_delete=models.CASCADE, null=True, blank=True)
+    
+
+    def __str__(self):
+        return self.user.username

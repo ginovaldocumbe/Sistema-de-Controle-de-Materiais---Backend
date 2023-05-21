@@ -1,9 +1,10 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from .models import Material, Categoria, Entrada, PedidoMaterial, Fornecimento, Fornecedor, Cargo, EstadoPedido
+from .models import Material, Categoria, Entrada, PedidoMaterial, Fornecimento, Fornecedor, Cargo, EstadoPedido, DadosUser, Contacto_User
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -17,10 +18,30 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return token
 
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model= User
+        fields= '__all__'
+
+class CargoSerializer(ModelSerializer):
+    id_pessoa = serializers.StringRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Cargo
+        fields = '__all__'
+
+
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     username = serializers.CharField()
     password = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    sexo = serializers.CharField()
+    data_nascimento = serializers.DateField(input_formats=["%d-%m-%Y"])
+    # contacto = serializers.IntegerField()
+    # cargo = serializers.IntegerField()
 
     def validate(self, data):
         if data['username']:
@@ -34,9 +55,25 @@ class RegisterSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         user = User.objects.create(
-            username=validated_data['username'], email=validated_data['email'])
+            username=validated_data['username'], email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'])
         user.set_password(validated_data['password'])
         user.save()
+
+        pessoa = User.objects.get(pk = 1)
+        carg = Cargo.objects.get(id=1)
+        print("Cargo: ",carg)
+
+ 
+
+        outros_dados = DadosUser.objects.create(
+            sexo=validated_data['sexo'],
+            data_nascimento=validated_data['data_nascimento'],
+            # cargo=carg,
+            user_id= pessoa
+        )
+        outros_dados.save()
         return validated_data
 
 
@@ -85,10 +122,11 @@ class EstadoSerializer(ModelSerializer):
 
 class PedidoMaterialSerializer(serializers.ModelSerializer):
     id_material = MaterialSerializer()
-    id_pessoa = serializers.StringRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    id_pessoa = serializers.StringRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault())
     # id_pessoa = serializers.SerializerMethodField('_user')
     estadoPedido = EstadoSerializer()
-  
+
     class Meta:
         model = PedidoMaterial
         fields = '__all__'
@@ -97,13 +135,6 @@ class PedidoMaterialSerializer(serializers.ModelSerializer):
 class FornecimentoSerializer(ModelSerializer):
     class Meta:
         model = Fornecimento
-        fields = '__all__'
-
-
-class CargoSerializer(ModelSerializer):
-    id_pessoa = serializers.StringRelatedField(read_only=True, default=serializers.CurrentUserDefault())
-    class Meta:
-        model = Cargo
         fields = '__all__'
 
 

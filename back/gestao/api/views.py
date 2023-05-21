@@ -9,7 +9,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from .models import Material, Categoria, Entrada, PedidoMaterial, Fornecimento, Cargo, Fornecedor
-from .serializers import MaterialSerializer, RegisterSerializer, LoginSerializer, CategoriaSerializer, EntradaSerializer, PedidoMaterialSerializer, FornecimentoSerializer, CargoSerializer, FornecedorSerializer, EstadoPedido, MyTokenObtainPairSerializer
+from .serializers import MaterialSerializer, RegisterSerializer, LoginSerializer, CategoriaSerializer, EntradaSerializer, UserSerializer,PedidoMaterialSerializer, FornecimentoSerializer, CargoSerializer, FornecedorSerializer, EstadoPedido, MyTokenObtainPairSerializer
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -67,7 +67,8 @@ class RegisterApi(APIView):
 
         return Response({
             'status': True,
-            'mensagem': 'Usuario registado com sucesso!'
+            'mensagem': 'Usuario registado com sucesso!',
+            'dados_usuario':serializer.data
         }, status.HTTP_201_CREATED)
 
 
@@ -337,6 +338,44 @@ class CargoAPI(APIView):
             'status': True,
             'mensagem': 'Categoria apagada com sucesso!!'
         }, status.HTTP_202_ACCEPTED)
+
+
+class FuncionarioAPI(APIView):
+    def get(self, request):
+        data =  User.objects.all()
+        serializer = UserSerializer(data, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        pessoa = User.objects.get(pk=request.data['id_pessoa'])
+        cargo = Cargo.objects.create(
+            descricao=request.data['descricao'],
+            id_pessoa=pessoa
+        )
+        serializer = CargoSerializer(cargo, many=False)
+        return Response(serializer.data)
+
+    def put(self, request):
+        cargo = Cargo.objects.get(id=request.data['id'])
+        pessoa = User.objects.get(pk=request.data['id_pessoa'])
+
+        cargo.descricao = request.data['descricao'],
+        cargo.id_pessoa = pessoa
+
+        cargo.save()
+
+        serializer = CargoSerializer(cargo, many=False)
+        return Response(serializer.data)
+
+    def delete(self, request):
+        data = request.data
+        obj = Cargo.objects.get(id=data['id'])
+        obj.delete()
+        return Response({
+            'status': True,
+            'mensagem': 'Categoria apagada com sucesso!!'
+        }, status.HTTP_202_ACCEPTED)
+
 
 
 class FornecedorAPI(APIView):

@@ -13,6 +13,7 @@ urlpatterns = [
     path('', views.endpoints),
     path('registo/', views.RegisterApi.as_view()),
     path('login/', views.LoginApi.as_view()),
+    path('funcionario/', views.FuncionarioAPI.as_view()),
     
     #Endpoints do material 
     path('material/', views.MaterialAPI.as_view()),
