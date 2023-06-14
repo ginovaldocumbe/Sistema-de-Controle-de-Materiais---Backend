@@ -1,21 +1,22 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.http import  HttpResponseNotFound
+from django.http import HttpResponseNotFound
 from rest_framework.views import APIView
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
-from .models import Material, Categoria, Entrada, PedidoMaterial, Fornecimento, Cargo, Fornecedor
-from .serializers import MaterialSerializer, RegisterSerializer, LoginSerializer, CategoriaSerializer, EntradaSerializer, UserSerializer,PedidoMaterialSerializer, FornecimentoSerializer, CargoSerializer, FornecedorSerializer, EstadoPedido, MyTokenObtainPairSerializer
+from .models import Material, Categoria, Entrada, PedidoMaterial, Fornecimento, Cargo, Fornecedor, DadosUser
+from .serializers import MaterialSerializer, RegisterSerializer, LoginSerializer, CategoriaSerializer, DadosSerializer, EstadoSerializer, EntradaSerializer, UserSerializer, UserSerializer, PedidoMaterialSerializer, FornecimentoSerializer, CargoSerializer, FornecedorSerializer, EstadoPedido, MyTokenObtainPairSerializer
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
 
 @api_view(['GET'])
 def endpoints(request):
@@ -35,7 +36,7 @@ class LoginApi(APIView):
             }, status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(
-            username=serializer.data['username'], password=serializer.data['password'])
+            email=serializer.data['email'], password=serializer.data['password'])
         if not user:
             return Response({
                 'status': False,
@@ -68,7 +69,7 @@ class RegisterApi(APIView):
         return Response({
             'status': True,
             'mensagem': 'Usuario registado com sucesso!',
-            'dados_usuario':serializer.data
+            'dados_usuario': serializer.data
         }, status.HTTP_201_CREATED)
 
 
@@ -80,16 +81,22 @@ class MaterialAPI(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        categori = Categoria.objects.get(id=request.data['categoria'])
         material = Material.objects.create(
-            # categoria=request.data['categoria'],
+            categoria=categori,
             nome=request.data['nome'],
             descricao=request.data['descricao'],
             quant_min=request.data['quant_min'],
             quant_disponivel=request.data['quant_disponivel'],
             cod_barras=request.data['cod_barras']
         )
+
         serializer = MaterialSerializer(material, many=False)
-        return Response(serializer.data)
+        return Response({
+            'status': True,
+            'mensagem': 'Material registado com sucesso!',
+            'dados_usuario': serializer.data
+        }, status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'PUT', "DELETE"])
@@ -216,17 +223,28 @@ class PedidoMaterialAPI(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        material = Material.objects.get(id=request.data['id_material'])
-        pessoa = User.objects.get(pk=request.data['id_Pessoa'])
-        estado = EstadoPedido.objects.get(id=request.data['estadoPedido'])
+        material = Material.objects.get(id=2)
+        pessoa = User.objects.get(id=2)
+        estado = EstadoPedido.objects.get(id=1)
+
+        if request.data['estadoPedido'] == 1:
+            if material.quant_disponivel < request.data['quant_Pedida']:
+                return Response({
+                    'status': False,
+                    'mensagem': 'Quantidade pedida indisponivel!'
+                }, status.HTTP_404_NOT_FOUND)
+
+            else:
+               quant = MaterialSerializer
 
         pedido = PedidoMaterial.objects.create(
             dataPedido=request.data['dataPedido'],
-            quant_pedida=request.data['quant_pedida'],
-            id_Material=material,
-            id_Pessoa=pessoa,
+            quant_Pedida=request.data['quant_pedida'],
+            id_material=material,
+            id_pessoa=pessoa,
             estadoPedido=estado
         )
+        
         serializer = PedidoMaterialSerializer(pedido, many=False)
         return Response(serializer.data)
 
@@ -235,6 +253,16 @@ class PedidoMaterialAPI(APIView):
         material = Material.objects.get(id=request.data['id_material'])
         pessoa = User.objects.get(pk=request.data['id_pessoa'])
         estado = EstadoPedido.objects.get(id=request.data['estadoPedido'])
+
+        if request.data['estadoPedido'] == 2:
+            if material.quant_disponivel < request.data['quant_Pedida']:
+                return HttpResponseNotFound({
+                    'status': False,
+                    'mensagem': 'Quantidade pedida indisponivel!'
+                }, status.HTTP_404_NOT_FOUND)
+
+            else:
+                print("Updade do numero disponivel")
 
         print(material)
         pedido.dataPedido = request.data['dataPedido']
@@ -254,7 +282,7 @@ class PedidoMaterialAPI(APIView):
         obj.delete()
         return Response({
             'status': True,
-            'mensagem': 'Pedido apagada com sucesso!!'
+            'mensagem': 'Pedido apagado  com sucesso!!'
         }, status.HTTP_202_ACCEPTED)
 
 
@@ -303,6 +331,13 @@ class FornecimentoAPI(APIView):
         }, status.HTTP_202_ACCEPTED)
 
 
+class EstadoAPI(APIView):
+    def get(self, request):
+        data = EstadoPedido.objects.all()
+        serializer = EstadoSerializer(data, many=True)
+        return Response(serializer.data)
+
+
 class CargoAPI(APIView):
     def get(self, request):
         data = Cargo.objects.all()
@@ -342,12 +377,12 @@ class CargoAPI(APIView):
 
 class FuncionarioAPI(APIView):
     def get(self, request):
-        data =  User.objects.all()
-        serializer = UserSerializer(data, many=True)
+        data = DadosUser.objects.all()
+        serializer = DadosSerializer(data, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        pessoa = User.objects.get(pk=request.data['id_pessoa'])
+        pessoa = DadosUser.objects.get(id=request.data['id_pessoa'])
         cargo = Cargo.objects.create(
             descricao=request.data['descricao'],
             id_pessoa=pessoa
@@ -375,7 +410,6 @@ class FuncionarioAPI(APIView):
             'status': True,
             'mensagem': 'Categoria apagada com sucesso!!'
         }, status.HTTP_202_ACCEPTED)
-
 
 
 class FornecedorAPI(APIView):

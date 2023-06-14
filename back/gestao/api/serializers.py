@@ -12,16 +12,33 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
 
         # Add custom claims
-        token['username'] = user.username
         token['email'] = user.email
+        token['username'] = user.username
         # ...
 
         return token
 
+
+class ContactoSerializer(ModelSerializer):
+    class Meta:
+        model = Contacto_User
+        fields = '__all__'
+
+
 class UserSerializer(ModelSerializer):
     class Meta:
-        model= User
-        fields= '__all__'
+        model = User
+        fields = '__all__'
+
+
+class DadosSerializer(ModelSerializer):
+    user = UserSerializer()
+    contacto = ContactoSerializer()
+
+    class Meta:
+        model = DadosUser
+        fields = '__all__'
+
 
 class CargoSerializer(ModelSerializer):
     id_pessoa = serializers.StringRelatedField(
@@ -61,24 +78,22 @@ class RegisterSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
 
-        pessoa = User.objects.get(pk = 1)
+        pessoa = User.objects.get(pk=1)
         carg = Cargo.objects.get(id=1)
-        print("Cargo: ",carg)
-
- 
+        print("Cargo: ", carg)
 
         outros_dados = DadosUser.objects.create(
             sexo=validated_data['sexo'],
             data_nascimento=validated_data['data_nascimento'],
             # cargo=carg,
-            user_id= pessoa
+            user_id=pessoa
         )
         outros_dados.save()
         return validated_data
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.CharField()
     password = serializers.CharField()
 
 

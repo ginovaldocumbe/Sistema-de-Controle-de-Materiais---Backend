@@ -20,10 +20,10 @@ urlpatterns = [
     path('material/<str:id>', views.material_detalhes),
 
     path('categoria/', views.CategoriaAPI.as_view()),
+    path('estado/', views.EstadoAPI.as_view()),
     path('entrada/', views.EntradaAPI.as_view()),
     path('pedido_material/', views.PedidoMaterialAPI.as_view()),
     path('fornecimento/', views.FornecimentoAPI.as_view()),
     path('cargo/', views.CargoAPI.as_view()),
     path('fornecedor/', views.FornecedorAPI.as_view()),
-
 ]

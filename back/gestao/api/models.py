@@ -21,7 +21,7 @@ class Material(models.Model):
     quant_disponivel = models.IntegerField(null=True, blank=True)
     cod_barras = models.IntegerField(null=True, blank=True)
     categoria = models.ForeignKey(
-        Categoria, blank=True, null=True, on_delete=models.CASCADE)
+        Categoria, blank=True, null=True, on_delete=models.CASCADE, default="")
 
     def __str__(self):
         return self.nome
@@ -105,7 +105,7 @@ class Contacto_User(models.Model):
     )
 
     def __str__(self):
-        return self.contacto
+        return f"{self.contacto}"
 
 class DadosUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -113,12 +113,11 @@ class DadosUser(models.Model):
         ("M", "Masculino"),
         ("F", "Femenino")
     )
-
     sexo = models.CharField(max_length=1,choices=SEXO_CHOICE, null=True, blank=True)
     data_nascimento = models.DateField()
-    cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE, null=True, blank=True)
     contacto = models.ForeignKey(Contacto_User, on_delete=models.CASCADE, null=True, blank=True)
     
-
     def __str__(self):
         return self.user.username
+
+ 
